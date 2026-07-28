@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小松市立高校 バス時刻案内</title>
+  <style>
+    :root {
+      --primary: #1a365d;
+      --accent: #2b6cb0;
+      --bg: #f4f6f8;
+      --card-bg: #ffffff;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: #333;
+      margin: 0;
+      padding: 12px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    h1 {
+      font-size: 1.15rem;
+      margin: 0 0 12px 0;
+      color: var(--primary);
+      text-align: center;
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: #e2e8f0;
+      border-radius: 8px;
+      font-weight: bold;
+      color: #4a5568;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+    .search-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.85rem;
+      color: #4a5568;
+    }
+    input, select {
+      padding: 8px;
+      border: 1px solid #cbd5e0;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      margin-top: 4px;
+    }
+    .status-badge {
+      background: #ebf8ff;
+      border-left: 4px solid var(--accent);
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+    }
+    .status-badge.alert {
+      background: #fff5f5;
+      border-left-color: #e53e3e;
+      color: #c53030;
+    }
+    .bus-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .bus-item.recommend {
+      border: 2px solid #319795;
+      background-color: #e6fffa;
+    }
+    .bus-time {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #2d3748;
+    }
+    .bus-info {
+      font-size: 0.8rem;
+      color: #718096;
+      margin-top: 2px;
+    }
+    .tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      margin-right: 4px;
+    }
+    .tag-hokutetsu { background: #ebf8ff; color: #2b6cb0; }
+    .tag-loop { background: #feebc8; color: #c05621; }
+    .arrival-school {
+      text-align: right;
+      font-size: 0.85rem;
+      color: #2d3748;
+    }
+    .arrival-school span {
+      font-weight: bold;
+      font-size: 1rem;
+      color: #2b6cb0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>小松市立高校 ⇔ 小松駅 バス時刻案内</h1>
+
+  <!-- 方向切り替え -->
+  <div class="tabs">
+    <button class="tab-btn active" id="btnToSchool" onclick="setDirection('toSchool')">行き (小松駅発)</button>
+    <button class="tab-btn" id="btnToStation" onclick="setDirection('toStation')">帰り (学校発)</button>
+  </div>
+
+  <!-- 日時指定条件 -->
+  <div class="search-panel">
+    <div class="input-group">
+      <label>日付</label>
+      <input type="date" id="searchDate" onchange="onConditionChange()">
+    </div>
+    <div class="input-group">
+      <label>時刻</label>
+      <input type="time" id="searchTime" onchange="onConditionChange()">
+    </div>
+  </div>
+
+  <!-- ダイヤ判定バッジ -->
+  <div id="statusBadge" class="status-badge"></div>
+
+  <!-- バス一覧表示エリア -->
+  <div id="busList"></div>
+</div>
+
+<script>
+// ==========================================
+// 1. 時刻表データ（例示サンプル構造）
+// ※ 実際の正確なダイヤ時刻をここへ登録・修正してください
+// ==========================================
+const busData = {
+  // --- 行き (小松駅発) ---
+  toSchool: [
+    // 北鉄加賀バス (市立高校前: 徒歩2分 / 小松駅発 -> 市立高校前着)
+    { line: "ハニベ線", type: "hokutetsu", dep: "07:20", arr: "07:35", satSun: false, schoolHolidays: false },
+    { line: "麦口線",   type: "hokutetsu", dep: "07:45", arr: "08:00", satSun: false, schoolHolidays: false },
+    { line: "尾小屋線", type: "hokutetsu", dep: "08:15", arr: "08:30", satSun: true,  schoolHolidays: false },
+    
+    // 市内循環バス南ルート (八幡町: 徒歩10分 / 小松駅発 -> 八幡町着)
+    { line: "市内循環(市民病院先行)", type: "loop", dep: "07:35", arr: "07:44", satSun: true, schoolHolidays: true },
+    { line: "市内循環(郵便局先行)",   type: "loop", dep: "08:50", arr: "09:35", satSun: true, schoolHolidays: true },
+    { line: "市内循環(市民病院先行)", type: "loop", dep: "10:05", arr: "10:14", satSun: true, schoolHolidays: true }
+  ],
+  
+  // --- 帰り (学校発) ---
+  toStation: [
+    // 北鉄加賀バス (市立高校前発 -> 小松駅着)
+    { line: "ハニベ線", type: "hokutetsu", dep: "16:10", arr: "16:25", satSun: false, schoolHolidays: false },
+    { line: "尾小屋線", type: "hokutetsu", dep: "17:05", arr: "17:20", satSun: true,  schoolHolidays: false },
+    
+    // 市内循環バス南ルート (八幡町発 -> 小松駅着)
+    { line: "市内循環(市民病院先行)", type: "loop", dep: "16:44", arr: "17:15", satSun: true, schoolHolidays: true },
+    { line: "市内循環(郵便局先行)",   type: "loop", dep: "17:41", arr: "18:15", satSun: true, schoolHolidays: true }
+  ]
+};
+
+// 徒歩所要時間
+const walkTime = {
+  hokutetsu: 2, // 市立高校前：徒歩2分
+  loop: 10      // 八幡町：徒歩10分
+};
+
+let currentDirection = 'toSchool';
+
+// ==========================================
+// 2. 学休運休・土日祝日判定ロジック
+// ==========================================
+function isSchoolHoliday(date) {
+  const m = date.getMonth() + 1;
+  const d = date.getDate();
+  // 毎年 1/1～1/7, 春休み(3/25～4/6), 夏休み(7/21～8/31), 冬休み(12/25～12/31)
+  if (m === 1 && d <= 7) return true;
+  if ((m === 3 && d >= 25) || (m === 4 && d <= 6)) return true;
+  if ((m === 7 && d >= 21) || m === 8) return true;
+  if (m === 12 && d >= 25) return true;
+  return false;
+}
+
+function getDayInfo(date) {
+  const day = date.getDay();
+  const isWeekend = (day === 0 || day === 6); // 土日
+  const isHoliday = isSchoolHoliday(date);
+  return { isWeekend, isHoliday };
+}
+
+// 時刻文字列 (HH:MM) を分に変換
+function timeToMin(timeStr) {
+  const [h, m] = timeStr.split(':').map(Number);
+  return h * 60 + m;
+}
+
+// 分を時刻文字列 (HH:MM) に変換
+function minToTime(min) {
+  const h = Math.floor(min / 60).toString().padStart(2, '0');
+  const m = (min % 60).toString().padStart(2, '0');
+  return `${h}:${m}`;
+}
+
+// ==========================================
+// 3. 表示・検索処理
+// ==========================================
+function setDirection(dir) {
+  currentDirection = dir;
+  document.getElementById('btnToSchool').classList.toggle('active', dir === 'toSchool');
+  document.getElementById('btnToStation').classList.toggle('active', dir === 'toStation');
+  render();
+}
+
+function onConditionChange() {
+  render();
+}
+
+function render() {
+  const dateVal = document.getElementById('searchDate').value;
+  const timeVal = document.getElementById('searchTime').value;
+  
+  if (!dateVal || !timeVal) return;
+
+  const targetDate = new Date(dateVal + 'T' + timeVal);
+  const dayInfo = getDayInfo(targetDate);
+  const searchMin = timeToMin(timeVal);
+
+  // ダイヤ状態表示更新
+  const badge = document.getElementById('statusBadge');
+  let statusMsg = dayInfo.isWeekend ? "【土日祝ダイヤ】" : "【平日ダイヤ】";
+  if (dayInfo.isHoliday) {
+    statusMsg += " ⚠️学休期間中";
+    badge.className = "status-badge alert";
+  } else {
+    badge.className = "status-badge";
+  }
+  badge.innerHTML = statusMsg;
+
+  // 対象方向のバスをフィルタリング
+  const rawList = busData[currentDirection];
+  const validList = rawList.filter(bus => {
+    // 1. 土日祝チェック（北鉄加賀バスのみ影響）
+    if (!bus.satSun && dayInfo.isWeekend) return false;
+    // 2. 学休運休チェック（北鉄加賀バスのみ影響）
+    if (!bus.schoolHolidays && dayInfo.isHoliday) return false;
+    return true;
+  });
+
+  // 指定時刻以降の便をソート
+  const upcomingList = validList
+    .map(bus => {
+      const depMin = timeToMin(bus.dep);
+      const arrMin = timeToMin(bus.arr);
+      
+      // 学校到着（または小松駅到着）予測時刻の計算
+      // 行き：バス降車時刻 + 徒歩時間 = 学校到着時刻
+      // 帰り：指定時刻 + 徒歩時間 <= バス乗車時刻
+      let totalArrMin = arrMin;
+      if (currentDirection === 'toSchool') {
+        totalArrMin = arrMin + walkTime[bus.type];
+      }
+      
+      return { ...bus, depMin, arrMin, totalArrMin };
+    })
+    .filter(bus => bus.depMin >= searchMin)
+    .sort((a, b) => a.depMin - b.depMin);
+
+  // 描画
+  const listContainer = document.getElementById('busList');
+  if (upcomingList.length === 0) {
+    listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#a0aec0;">該当するバスはありません</div>`;
+    return;
+  }
+
+  listContainer.innerHTML = upcomingList.map((bus, index) => {
+    const isFirst = (index === 0);
+    const tagClass = bus.type === 'hokutetsu' ? 'tag-hokutetsu' : 'tag-loop';
+    const busStopName = bus.type === 'hokutetsu' ? '市立高校前' : '八幡町';
+    const walkMinutes = walkTime[bus.type];
+
+    let destHtml = '';
+    if (currentDirection === 'toSchool') {
+      destHtml = `学校到着目安 <span>${minToTime(bus.totalArrMin)}</span><br><small>(${busStopName}下車 徒歩${walkMinutes}分)</small>`;
+    } else {
+      destHtml = `小松駅到着 <span>${bus.arr}</span><br><small>(${busStopName}まで 徒歩${walkMinutes}分)</small>`;
+    }
+
+    return `
+      <div class="bus-item ${isFirst ? 'recommend' : ''}">
+        <div>
+          <div>
+            <span class="tag ${tagClass}">${bus.line}</span>
+            ${isFirst ? '<strong style="color:#319795; font-size:0.8rem;">[最先発]</strong>' : ''}
+          </div>
+          <div class="bus-time" style="margin-top:4px;">
+            ${bus.dep} <span style="font-size:0.9rem; font-weight:normal;">発</span>
+          </div>
+        </div>
+        <div class="arrival-school">
+          ${destHtml}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// 初期値セット（現在日時）
+const now = new Date();
+document.getElementById('searchDate').value = now.toISOString().split('T')[0];
+document.getElementById('searchTime').value = now.toTimeString().slice(0, 5);
+render();
+</script>
+</body>
+</html>
