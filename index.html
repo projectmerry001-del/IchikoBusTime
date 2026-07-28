@@ -163,91 +163,100 @@
 
 <script>
 // ==========================================
-// 1. 全路線時刻表データ
-// satSun: true = 土日祝運休なし (土日祝も運行) / false = 土日祝運休
-// schoolHolidays: true = 学休運休なし (学休も運行) / false = 学休期間運休
+// 1. 正確な路線時刻表データ（CSVから抽出）
+// satSun: true = 土日祝も運行 / false = 平日のみ (土日祝運休)
+// schoolHolidays: true = 学休期間も運行 / false = 学休期間運休
 // ==========================================
 const busData = {
   // --- 行き (小松駅発) ---
   toSchool: [
-    // 北鉄加賀バス (小松駅発 -> 市立高校前着)
-    // 尾小屋線
-    { line: "尾小屋線", type: "hokutetsu", dep: "07:15", arr: "07:29", satSun: false, schoolHolidays: false },
-    { line: "尾小屋線", type: "hokutetsu", dep: "08:15", arr: "08:29", satSun: true,  schoolHolidays: true },
-    { line: "尾小屋線", type: "hokutetsu", dep: "10:05", arr: "10:19", satSun: true,  schoolHolidays: true },
-    { line: "尾小屋線", type: "hokutetsu", dep: "12:15", arr: "12:29", satSun: true,  schoolHolidays: true },
-    { line: "尾小屋線", type: "hokutetsu", dep: "14:15", arr: "14:29", satSun: true,  schoolHolidays: true },
-    { line: "尾小屋線", type: "hokutetsu", dep: "16:25", arr: "16:39", satSun: true,  schoolHolidays: true },
-    { line: "尾小屋線", type: "hokutetsu", dep: "17:35", arr: "17:49", satSun: false, schoolHolidays: true },
-    { line: "尾小屋線", type: "hokutetsu", dep: "18:20", arr: "18:34", satSun: true,  schoolHolidays: true },
+    // ハニベ線 (平日)
+    { line: "ハニベ線", type: "hokutetsu", dep: "07:20", arr: "07:32", satSun: false, schoolHolidays: true },
+    { line: "ハニベ線", type: "hokutetsu", dep: "07:45", arr: "07:55", satSun: false, schoolHolidays: true },
+    { line: "ハニベ線", type: "hokutetsu", dep: "07:50", arr: "08:00", satSun: false, schoolHolidays: false }, // 学休運休
+    { line: "ハニベ線", type: "hokutetsu", dep: "08:10", arr: "08:20", satSun: false, schoolHolidays: false }, // 学休運休
+    { line: "ハニベ線", type: "hokutetsu", dep: "11:20", arr: "11:30", satSun: false, schoolHolidays: true },
+    { line: "ハニベ線", type: "hokutetsu", dep: "15:05", arr: "15:15", satSun: false, schoolHolidays: true },
+    { line: "ハニベ線", type: "hokutetsu", dep: "16:05", arr: "16:15", satSun: false, schoolHolidays: true },
+    { line: "ハニベ線", type: "hokutetsu", dep: "17:05", arr: "17:15", satSun: false, schoolHolidays: true },
+    { line: "ハニベ線", type: "hokutetsu", dep: "18:00", arr: "18:10", satSun: false, schoolHolidays: true },
 
-    // ハニベ線
-    { line: "ハニベ線", type: "hokutetsu", dep: "07:20", arr: "07:34", satSun: false, schoolHolidays: true },
-    { line: "ハニベ線", type: "hokutetsu", dep: "08:50", arr: "09:04", satSun: true,  schoolHolidays: true },
-    { line: "ハニベ線", type: "hokutetsu", dep: "11:20", arr: "11:34", satSun: true,  schoolHolidays: true },
-    { line: "ハニベ線", type: "hokutetsu", dep: "13:15", arr: "13:29", satSun: true,  schoolHolidays: true },
-    { line: "ハニベ線", type: "hokutetsu", dep: "15:20", arr: "15:34", satSun: true,  schoolHolidays: true },
-    { line: "ハニベ線", type: "hokutetsu", dep: "17:15", arr: "17:29", satSun: true,  schoolHolidays: true },
-    { line: "ハニベ線", type: "hokutetsu", dep: "18:45", arr: "18:59", satSun: false, schoolHolidays: true },
+    // ハニベ線 (土日祝)
+    { line: "ハニベ線", type: "hokutetsu", dep: "07:45", arr: "07:55", satSun: true, schoolHolidays: true },
+    { line: "ハニベ線", type: "hokutetsu", dep: "11:20", arr: "11:30", satSun: true, schoolHolidays: true },
+    { line: "ハニベ線", type: "hokutetsu", dep: "15:05", arr: "15:15", satSun: true, schoolHolidays: true },
+    { line: "ハニベ線", type: "hokutetsu", dep: "16:05", arr: "16:15", satSun: true, schoolHolidays: true },
 
-    // 麦口線
-    { line: "麦口線",   type: "hokutetsu", dep: "07:40", arr: "07:54", satSun: false, schoolHolidays: false },
-    { line: "麦口線",   type: "hokutetsu", dep: "09:35", arr: "09:49", satSun: true,  schoolHolidays: true },
-    { line: "麦口線",   type: "hokutetsu", dep: "14:40", arr: "14:54", satSun: true,  schoolHolidays: true },
-    { line: "麦口線",   type: "hokutetsu", dep: "17:55", arr: "18:09", satSun: true,  schoolHolidays: true },
+    // 尾小屋線 (平日)
+    { line: "尾小屋線", type: "hokutetsu", dep: "08:00", arr: "08:10", satSun: false, schoolHolidays: true },
+    { line: "尾小屋線", type: "hokutetsu", dep: "13:15", arr: "13:25", satSun: false, schoolHolidays: true },
 
-    // 市内循環バス南ルート (小松駅発 -> 八幡町着 / 土日祝・学休の運休なし)
+    // 尾小屋線 (土日祝)
+    { line: "尾小屋線", type: "hokutetsu", dep: "13:15", arr: "13:25", satSun: true, schoolHolidays: true },
+
+    // 麦口線 (平日)
+    { line: "麦口線", type: "hokutetsu", dep: "09:40", arr: "09:50", satSun: false, schoolHolidays: true },
+    { line: "麦口線", type: "hokutetsu", dep: "12:00", arr: "12:13", satSun: false, schoolHolidays: true },
+    { line: "麦口線", type: "hokutetsu", dep: "17:35", arr: "17:45", satSun: false, schoolHolidays: true },
+
+    // 麦口線 (土日祝)
+    { line: "麦口線", type: "hokutetsu", dep: "09:40", arr: "09:50", satSun: true, schoolHolidays: true },
+    { line: "麦口線", type: "hokutetsu", dep: "12:00", arr: "12:13", satSun: true, schoolHolidays: true },
+    { line: "麦口線", type: "hokutetsu", dep: "17:35", arr: "17:45", satSun: true, schoolHolidays: true },
+
+    // 市内循環バス 南コース (市民病院先行)
     { line: "市内循環(市民病院先行)", type: "loop", dep: "07:35", arr: "07:44", satSun: true, schoolHolidays: true },
-    { line: "市内循環(郵便局先行)",   type: "loop", dep: "08:50", arr: "09:35", satSun: true, schoolHolidays: true },
     { line: "市内循環(市民病院先行)", type: "loop", dep: "10:05", arr: "10:14", satSun: true, schoolHolidays: true },
-    { line: "市内循環(郵便局先行)",   type: "loop", dep: "11:20", arr: "12:05", satSun: true, schoolHolidays: true },
-    { line: "市内循環(市民病院先行)", type: "loop", dep: "12:35", arr: "12:44", satSun: true, schoolHolidays: true },
-    { line: "市内循環(郵便局先行)",   type: "loop", dep: "13:50", arr: "14:35", satSun: true, schoolHolidays: true },
-    { line: "市内循環(市民病院先行)", type: "loop", dep: "15:05", arr: "15:14", satSun: true, schoolHolidays: true },
-    { line: "市内循環(郵便局先行)",   type: "loop", dep: "16:35", arr: "17:20", satSun: true, schoolHolidays: true },
-    { line: "市内循環(市民病院先行)", type: "loop", dep: "17:50", arr: "17:59", satSun: true, schoolHolidays: true }
+    { line: "市内循環(市民病院先行)", type: "loop", dep: "13:55", arr: "14:04", satSun: true, schoolHolidays: true },
+    { line: "市内循環(市民病院先行)", type: "loop", dep: "16:35", arr: "16:44", satSun: true, schoolHolidays: true },
+
+    // 市内循環バス 南コース (小松郵便局前先行)
+    { line: "市内循環(郵便局先行)", type: "loop", dep: "08:50", arr: "09:04", satSun: true, schoolHolidays: true },
+    { line: "市内循環(郵便局先行)", type: "loop", dep: "11:25", arr: "11:39", satSun: true, schoolHolidays: true },
+    { line: "市内循環(郵便局先行)", type: "loop", dep: "15:20", arr: "15:34", satSun: true, schoolHolidays: true },
+    { line: "市内循環(郵便局先行)", type: "loop", dep: "17:30", arr: "17:41", satSun: true, schoolHolidays: true }
   ],
 
   // --- 帰り (学校発) ---
   toStation: [
-    // 北鉄加賀バス (市立高校前発 -> 小松駅着)
-    // 尾小屋線
-    { line: "尾小屋線", type: "hokutetsu", dep: "07:37", arr: "07:55", satSun: false, schoolHolidays: false },
-    { line: "尾小屋線", type: "hokutetsu", dep: "08:17", arr: "08:35", satSun: false, schoolHolidays: true },
-    { line: "尾小屋線", type: "hokutetsu", dep: "09:12", arr: "09:30", satSun: true,  schoolHolidays: true },
-    { line: "尾小屋線", type: "hokutetsu", dep: "11:02", arr: "11:20", satSun: true,  schoolHolidays: true },
-    { line: "尾小屋線", type: "hokutetsu", dep: "13:12", arr: "13:30", satSun: true,  schoolHolidays: true },
-    { line: "尾小屋線", type: "hokutetsu", dep: "15:12", arr: "15:30", satSun: true,  schoolHolidays: true },
-    { line: "尾小屋線", type: "hokutetsu", dep: "17:22", arr: "17:40", satSun: true,  schoolHolidays: true },
-    { line: "尾小屋線", type: "hokutetsu", dep: "18:32", arr: "18:50", satSun: false, schoolHolidays: true },
-    { line: "尾小屋線", type: "hokutetsu", dep: "19:17", arr: "19:35", satSun: true,  schoolHolidays: true },
+    // ハニベ線 (平日)
+    { line: "ハニベ線", type: "hokutetsu", dep: "08:36", arr: "08:48", satSun: false, schoolHolidays: true },
+    { line: "ハニベ線", type: "hokutetsu", dep: "11:56", arr: "12:08", satSun: false, schoolHolidays: true },
+    { line: "ハニベ線", type: "hokutetsu", dep: "15:41", arr: "15:53", satSun: false, schoolHolidays: true },
+    { line: "ハニベ線", type: "hokutetsu", dep: "16:41", arr: "16:53", satSun: false, schoolHolidays: true },
+    { line: "ハニベ線", type: "hokutetsu", dep: "17:41", arr: "17:53", satSun: false, schoolHolidays: true },
+    { line: "ハニベ線", type: "hokutetsu", dep: "18:31", arr: "18:43", satSun: false, schoolHolidays: true },
 
-    // ハニベ線
-    { line: "ハニベ線", type: "hokutetsu", dep: "07:30", arr: "07:48", satSun: false, schoolHolidays: true },
-    { line: "ハニベ線", type: "hokutetsu", dep: "08:10", arr: "08:28", satSun: false, schoolHolidays: true },
-    { line: "ハニベ線", type: "hokutetsu", dep: "09:45", arr: "10:03", satSun: true,  schoolHolidays: true },
-    { line: "ハニベ線", type: "hokutetsu", dep: "12:15", arr: "12:33", satSun: true,  schoolHolidays: true },
-    { line: "ハニベ線", type: "hokutetsu", dep: "14:10", arr: "14:28", satSun: true,  schoolHolidays: true },
-    { line: "ハニベ線", type: "hokutetsu", dep: "16:15", arr: "16:33", satSun: true,  schoolHolidays: true },
-    { line: "ハニベ線", type: "hokutetsu", dep: "18:10", arr: "18:28", satSun: true,  schoolHolidays: true },
+    // ハニベ線 (土日祝)
+    { line: "ハニベ線", type: "hokutetsu", dep: "08:36", arr: "08:48", satSun: true, schoolHolidays: true },
+    { line: "ハニベ線", type: "hokutetsu", dep: "11:56", arr: "12:08", satSun: true, schoolHolidays: true },
+    { line: "ハニベ線", type: "hokutetsu", dep: "15:41", arr: "15:53", satSun: true, schoolHolidays: true },
+    { line: "ハニベ線", type: "hokutetsu", dep: "16:41", arr: "16:53", satSun: true, schoolHolidays: true },
 
-    // 麦口線
-    { line: "麦口線",   type: "hokutetsu", dep: "07:11", arr: "07:29", satSun: false, schoolHolidays: true },
-    { line: "麦口線",   type: "hokutetsu", dep: "08:31", arr: "08:49", satSun: false, schoolHolidays: true },
-    { line: "麦口線",   type: "hokutetsu", dep: "10:31", arr: "10:49", satSun: true,  schoolHolidays: true },
-    { line: "麦口線",   type: "hokutetsu", dep: "15:36", arr: "15:54", satSun: true,  schoolHolidays: true },
-    { line: "麦口線",   type: "hokutetsu", dep: "18:51", arr: "19:09", satSun: true,  schoolHolidays: true },
+    // 尾小屋線 (平日)
+    { line: "尾小屋線", type: "hokutetsu", dep: "09:09", arr: "09:21", satSun: false, schoolHolidays: true },
+    { line: "尾小屋線", type: "hokutetsu", dep: "16:34", arr: "16:46", satSun: false, schoolHolidays: true },
 
-    // 市内循環バス南ルート (八幡町発 -> 小松駅着 / 土日祝・学休の運休なし)
-    { line: "市内循環(市民病院先行)", type: "loop", dep: "07:44", arr: "08:30", satSun: true, schoolHolidays: true },
-    { line: "市内循環(郵便局先行)",   type: "loop", dep: "09:35", arr: "09:44", satSun: true, schoolHolidays: true },
-    { line: "市内循環(市民病院先行)", type: "loop", dep: "10:14", arr: "11:00", satSun: true, schoolHolidays: true },
-    { line: "市内循環(郵便局先行)",   type: "loop", dep: "12:05", arr: "12:14", satSun: true, schoolHolidays: true },
-    { line: "市内循環(市民病院先行)", type: "loop", dep: "12:44", arr: "13:30", satSun: true, schoolHolidays: true },
-    { line: "市内循環(郵便局先行)",   type: "loop", dep: "14:35", arr: "14:44", satSun: true, schoolHolidays: true },
-    { line: "市内循環(市民病院先行)", type: "loop", dep: "15:14", arr: "16:00", satSun: true, schoolHolidays: true },
-    { line: "市内循環(郵便局先行)",   type: "loop", dep: "17:20", arr: "17:29", satSun: true, schoolHolidays: true },
-    { line: "市内循環(市民病院先行)", type: "loop", dep: "17:59", arr: "18:45", satSun: true, schoolHolidays: true }
+    // 尾小屋線 (土日祝)
+    { line: "尾小屋線", type: "hokutetsu", dep: "09:09", arr: "09:21", satSun: true, schoolHolidays: true },
+
+    // 麦口線 (平日)
+    { line: "麦口線", type: "hokutetsu", dep: "07:37", arr: "07:49", satSun: false, schoolHolidays: true },
+    { line: "麦口線", type: "hokutetsu", dep: "10:52", arr: "11:04", satSun: false, schoolHolidays: true },
+    { line: "麦口線", type: "hokutetsu", dep: "12:52", arr: "13:04", satSun: false, schoolHolidays: true },
+    { line: "麦口線", type: "hokutetsu", dep: "15:52", arr: "16:04", satSun: false, schoolHolidays: true },
+    { line: "麦口線", type: "hokutetsu", dep: "16:48", arr: "17:00", satSun: false, schoolHolidays: true },
+    { line: "麦口線", type: "hokutetsu", dep: "18:42", arr: "18:54", satSun: false, schoolHolidays: true },
+    { line: "麦口線", type: "hokutetsu", dep: "19:14", arr: "19:28", satSun: false, schoolHolidays: true },
+
+    // 麦口線 (土日祝)
+    { line: "麦口線", type: "hokutetsu", dep: "10:52", arr: "11:04", satSun: true, schoolHolidays: true },
+    { line: "麦口線", type: "hokutetsu", dep: "12:52", arr: "13:04", satSun: true, schoolHolidays: true },
+
+    // 市内循環バス 南コース (八幡町発 -> 小松駅行)
+    { line: "市内循環(郵便局先行)", type: "loop", dep: "09:35", arr: "09:50", satSun: true, schoolHolidays: true },
+    { line: "市内循環(郵便局先行)", type: "loop", dep: "12:10", arr: "12:25", satSun: true, schoolHolidays: true },
+    { line: "市内循環(郵便局先行)", type: "loop", dep: "16:05", arr: "16:20", satSun: true, schoolHolidays: true }
   ]
 };
 
@@ -331,12 +340,21 @@ function render() {
   // 対象方向のバスをフィルタリング
   const rawList = busData[currentDirection];
   const validList = rawList.filter(bus => {
-    // 1. 土日祝チェック（土日祝運休便の除外）
-    if (!bus.satSun && dayInfo.isWeekend) return false;
-    // 2. 学休運休チェック（学休運休便の除外）
-    if (!bus.schoolHolidays && dayInfo.isHoliday) return false;
+    // 1. 曜日チェック (平日専用便・土日祝専用便の分岐)
+    if (dayInfo.isWeekend && !bus.satSun) return false;
+    if (!dayInfo.isWeekend && bus.satSun && !isBothDaysBus(bus)) return false;
+
+    // 2. 学休運休チェック
+    if (dayInfo.isHoliday && !bus.schoolHolidays) return false;
+
     return true;
   });
+
+  // 平日・土日両方で走る便の同一判定補助
+  function isBothDaysBus(bus) {
+    // 平日判定時、同じ路線・時刻で平日設定が別にある場合は土日祝専用データを弾く
+    return !rawList.some(b => b.line === bus.line && b.dep === bus.dep && !b.satSun);
+  }
 
   // 指定時刻以降の便をソート
   const upcomingList = validList
@@ -344,7 +362,6 @@ function render() {
       const depMin = timeToMin(bus.dep);
       const arrMin = timeToMin(bus.arr);
       
-      // 学校到着予測時刻の計算
       let totalArrMin = arrMin;
       if (currentDirection === 'toSchool') {
         totalArrMin = arrMin + walkTime[bus.type];
