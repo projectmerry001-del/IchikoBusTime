@@ -91,23 +91,34 @@
       border-radius: 8px;
       padding: 12px;
       margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
     }
     .bus-item.recommend {
       border: 2px solid #319795;
       background-color: #e6fffa;
     }
-    .bus-time {
-      font-size: 1.2rem;
-      font-weight: bold;
-      color: #2d3748;
+    .bus-header {
+      margin-bottom: 8px;
     }
-    .bus-info {
-      font-size: 0.8rem;
-      color: #718096;
+    .bus-route {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .stop-info {
+      font-size: 0.82rem;
+      color: #4a5568;
+      font-weight: bold;
+    }
+    .bus-time {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: #1a202c;
       margin-top: 2px;
+    }
+    .bus-time span {
+      font-size: 0.85rem;
+      font-weight: normal;
+      color: #718096;
     }
     .tag {
       display: inline-block;
@@ -119,16 +130,6 @@
     }
     .tag-hokutetsu { background: #ebf8ff; color: #2b6cb0; }
     .tag-loop { background: #feebc8; color: #c05621; }
-    .arrival-school {
-      text-align: right;
-      font-size: 0.85rem;
-      color: #2d3748;
-    }
-    .arrival-school span {
-      font-weight: bold;
-      font-size: 1rem;
-      color: #2b6cb0;
-    }
   </style>
 </head>
 <body>
@@ -173,8 +174,8 @@ const busData = {
     // ハニベ線 (平日)
     { line: "ハニベ線", type: "hokutetsu", dep: "07:20", arr: "07:32", satSun: false, schoolHolidays: true },
     { line: "ハニベ線", type: "hokutetsu", dep: "07:45", arr: "07:55", satSun: false, schoolHolidays: true },
-    { line: "ハニベ線", type: "hokutetsu", dep: "07:50", arr: "08:00", satSun: false, schoolHolidays: false }, // 学休運休
-    { line: "ハニベ線", type: "hokutetsu", dep: "08:10", arr: "08:20", satSun: false, schoolHolidays: false }, // 学休運休
+    { line: "ハニベ線", type: "hokutetsu", dep: "07:50", arr: "08:00", satSun: false, schoolHolidays: false },
+    { line: "ハニベ線", type: "hokutetsu", dep: "08:10", arr: "08:20", satSun: false, schoolHolidays: false },
     { line: "ハニベ線", type: "hokutetsu", dep: "11:20", arr: "11:30", satSun: false, schoolHolidays: true },
     { line: "ハニベ線", type: "hokutetsu", dep: "15:05", arr: "15:15", satSun: false, schoolHolidays: true },
     { line: "ハニベ線", type: "hokutetsu", dep: "16:05", arr: "16:15", satSun: false, schoolHolidays: true },
@@ -263,12 +264,6 @@ const busData = {
   ]
 };
 
-// 徒歩所要時間
-const walkTime = {
-  hokutetsu: 2, // 市立高校前：徒歩2分
-  loop: 8       // 八幡会館：徒歩8分
-};
-
 let currentDirection = 'toSchool';
 
 // ==========================================
@@ -277,7 +272,6 @@ let currentDirection = 'toSchool';
 function isSchoolHoliday(date) {
   const m = date.getMonth() + 1;
   const d = date.getDate();
-  // 毎年 1/1～1/7, 春休み(3/25～4/6), 夏休み(7/21～8/31), 冬休み(12/25～12/31)
   if (m === 1 && d <= 7) return true;
   if ((m === 3 && d >= 25) || (m === 4 && d <= 6)) return true;
   if ((m === 7 && d >= 21) || m === 8) return true;
@@ -287,22 +281,14 @@ function isSchoolHoliday(date) {
 
 function getDayInfo(date) {
   const day = date.getDay();
-  const isWeekend = (day === 0 || day === 6); // 土日
+  const isWeekend = (day === 0 || day === 6);
   const isHoliday = isSchoolHoliday(date);
   return { isWeekend, isHoliday };
 }
 
-// 時刻文字列 (HH:MM) を分に変換
 function timeToMin(timeStr) {
   const [h, m] = timeStr.split(':').map(Number);
   return h * 60 + m;
-}
-
-// 分を時刻文字列 (HH:MM) に変換
-function minToTime(min) {
-  const h = Math.floor(min / 60).toString().padStart(2, '0');
-  const m = (min % 60).toString().padStart(2, '0');
-  return `${h}:${m}`;
 }
 
 // ==========================================
@@ -329,7 +315,6 @@ function render() {
   const dayInfo = getDayInfo(targetDate);
   const searchMin = timeToMin(timeVal);
 
-  // ダイヤ状態表示更新
   const badge = document.getElementById('statusBadge');
   let statusMsg = dayInfo.isWeekend ? "【土日祝ダイヤ】" : "【平日ダイヤ】";
   if (dayInfo.isHoliday) {
@@ -340,16 +325,11 @@ function render() {
   }
   badge.innerHTML = statusMsg;
 
-  // 対象方向のバスをフィルタリング
   const rawList = busData[currentDirection];
   const validList = rawList.filter(bus => {
-    // 1. 曜日チェック
     if (dayInfo.isWeekend && !bus.satSun) return false;
     if (!dayInfo.isWeekend && bus.satSun && !isBothDaysBus(bus)) return false;
-
-    // 2. 学休運休チェック
     if (dayInfo.isHoliday && !bus.schoolHolidays) return false;
-
     return true;
   });
 
@@ -357,23 +337,11 @@ function render() {
     return !rawList.some(b => b.line === bus.line && b.dep === bus.dep && !b.satSun);
   }
 
-  // 指定時刻以降の便をソート
   const upcomingList = validList
-    .map(bus => {
-      const depMin = timeToMin(bus.dep);
-      const arrMin = timeToMin(bus.arr);
-      
-      let totalArrMin = arrMin;
-      if (currentDirection === 'toSchool') {
-        totalArrMin = arrMin + walkTime[bus.type];
-      }
-      
-      return { ...bus, depMin, arrMin, totalArrMin };
-    })
+    .map(bus => ({ ...bus, depMin: timeToMin(bus.dep) }))
     .filter(bus => bus.depMin >= searchMin)
     .sort((a, b) => a.depMin - b.depMin);
 
-  // 描画
   const listContainer = document.getElementById('busList');
   if (upcomingList.length === 0) {
     listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#a0aec0;">該当するバスはありません</div>`;
@@ -383,29 +351,35 @@ function render() {
   listContainer.innerHTML = upcomingList.map((bus, index) => {
     const isFirst = (index === 0);
     const tagClass = bus.type === 'hokutetsu' ? 'tag-hokutetsu' : 'tag-loop';
-    const busStopName = bus.type === 'hokutetsu' ? '市立高校前' : '八幡会館';
-    const walkMinutes = walkTime[bus.type];
 
-    let destHtml = '';
+    let departureStop = '';
+    let arrivalStop = '';
+
     if (currentDirection === 'toSchool') {
-      destHtml = `学校到着目安 <span>${minToTime(bus.totalArrMin)}</span><br><small>(${busStopName}下車 徒歩${walkMinutes}分)</small>`;
+      // 行き：小松駅発
+      departureStop = bus.type === 'loop' ? '小松駅③番のりば' : '小松駅②番のりば';
+      arrivalStop = bus.type === 'loop' ? '八幡会館（学校まで徒歩8分）' : '市立高校前（学校まで徒歩2分）';
     } else {
-      destHtml = `小松駅到着 <span>${bus.arr}</span><br><small>(${busStopName}まで 徒歩${walkMinutes}分)</small>`;
+      // 帰り：学校発
+      departureStop = bus.type === 'loop' ? '八幡会館（学校から徒歩8分）' : '市立高校前（学校から徒歩2分）';
+      arrivalStop = '小松駅';
     }
 
     return `
       <div class="bus-item ${isFirst ? 'recommend' : ''}">
-        <div>
-          <div>
-            <span class="tag ${tagClass}">${bus.line}</span>
-            ${isFirst ? '<strong style="color:#319795; font-size:0.8rem;">[最先発]</strong>' : ''}
-          </div>
-          <div class="bus-time" style="margin-top:4px;">
-            ${bus.dep} <span style="font-size:0.9rem; font-weight:normal;">発</span>
-          </div>
+        <div class="bus-header">
+          <span class="tag ${tagClass}">${bus.line}</span>
+          ${isFirst ? '<strong style="color:#319795; font-size:0.8rem;">[最先発]</strong>' : ''}
         </div>
-        <div class="arrival-school">
-          ${destHtml}
+        <div class="bus-route">
+          <div>
+            <div class="stop-info">${departureStop}</div>
+            <div class="bus-time">${bus.dep} <span>発</span></div>
+          </div>
+          <div style="text-align: right;">
+            <div class="stop-info">${arrivalStop}</div>
+            <div class="bus-time">${bus.arr} <span>着</span></div>
+          </div>
         </div>
       </div>
     `;
