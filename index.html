@@ -163,8 +163,8 @@
 
 <script>
 // ==========================================
-// 1. 正確な路線時刻表データ（CSVから抽出）
-// satSun: true = 土日祝も運行 / false = 平日のみ (土日祝運休)
+// 1. 全路線時刻表データ
+// satSun: true = 土日祝も運行 / false = 平日のみ
 // schoolHolidays: true = 学休期間も運行 / false = 学休期間運休
 // ==========================================
 const busData = {
@@ -204,17 +204,15 @@ const busData = {
     { line: "麦口線", type: "hokutetsu", dep: "12:00", arr: "12:13", satSun: true, schoolHolidays: true },
     { line: "麦口線", type: "hokutetsu", dep: "17:35", arr: "17:45", satSun: true, schoolHolidays: true },
 
-    // 市内循環バス 南コース (市民病院先行)
-    { line: "市内循環(市民病院先行)", type: "loop", dep: "07:35", arr: "07:44", satSun: true, schoolHolidays: true },
-    { line: "市内循環(市民病院先行)", type: "loop", dep: "10:05", arr: "10:14", satSun: true, schoolHolidays: true },
-    { line: "市内循環(市民病院先行)", type: "loop", dep: "13:55", arr: "14:04", satSun: true, schoolHolidays: true },
-    { line: "市内循環(市民病院先行)", type: "loop", dep: "16:35", arr: "16:44", satSun: true, schoolHolidays: true },
+    // 市内循環バス 南コース (小松駅発 -> 八幡会館着)
+    { line: "市内循環(市民病院先行)", type: "loop", dep: "07:35", arr: "08:11", satSun: true, schoolHolidays: true },
+    { line: "市内循環(市民病院先行)", type: "loop", dep: "10:05", arr: "10:41", satSun: true, schoolHolidays: true },
+    { line: "市内循環(市民病院先行)", type: "loop", dep: "13:55", arr: "14:31", satSun: true, schoolHolidays: true },
 
-    // 市内循環バス 南コース (小松郵便局前先行)
-    { line: "市内循環(郵便局先行)", type: "loop", dep: "08:50", arr: "09:04", satSun: true, schoolHolidays: true },
-    { line: "市内循環(郵便局先行)", type: "loop", dep: "11:25", arr: "11:39", satSun: true, schoolHolidays: true },
-    { line: "市内循環(郵便局先行)", type: "loop", dep: "15:20", arr: "15:34", satSun: true, schoolHolidays: true },
-    { line: "市内循環(郵便局先行)", type: "loop", dep: "17:30", arr: "17:41", satSun: true, schoolHolidays: true }
+    { line: "市内循環(郵便局先行)", type: "loop", dep: "08:50", arr: "09:05", satSun: true, schoolHolidays: true },
+    { line: "市内循環(郵便局先行)", type: "loop", dep: "11:25", arr: "11:40", satSun: true, schoolHolidays: true },
+    { line: "市内循環(郵便局先行)", type: "loop", dep: "15:20", arr: "15:35", satSun: true, schoolHolidays: true },
+    { line: "市内循環(郵便局先行)", type: "loop", dep: "17:30", arr: "17:42", satSun: true, schoolHolidays: true }
   ],
 
   // --- 帰り (学校発) ---
@@ -253,17 +251,22 @@ const busData = {
     { line: "麦口線", type: "hokutetsu", dep: "10:52", arr: "11:04", satSun: true, schoolHolidays: true },
     { line: "麦口線", type: "hokutetsu", dep: "12:52", arr: "13:04", satSun: true, schoolHolidays: true },
 
-    // 市内循環バス 南コース (八幡町発 -> 小松駅行)
-    { line: "市内循環(郵便局先行)", type: "loop", dep: "09:35", arr: "09:50", satSun: true, schoolHolidays: true },
-    { line: "市内循環(郵便局先行)", type: "loop", dep: "12:10", arr: "12:25", satSun: true, schoolHolidays: true },
-    { line: "市内循環(郵便局先行)", type: "loop", dep: "16:05", arr: "16:20", satSun: true, schoolHolidays: true }
+    // 市内循環バス 南コース (八幡会館発 -> 小松駅行)
+    { line: "市内循環(市民病院先行)", type: "loop", dep: "08:11", arr: "08:25", satSun: true, schoolHolidays: true },
+    { line: "市内循環(市民病院先行)", type: "loop", dep: "10:41", arr: "11:00", satSun: true, schoolHolidays: true },
+    { line: "市内循環(市民病院先行)", type: "loop", dep: "14:31", arr: "14:50", satSun: true, schoolHolidays: true },
+
+    { line: "市内循環(郵便局先行)", type: "loop", dep: "09:05", arr: "09:50", satSun: true, schoolHolidays: true },
+    { line: "市内循環(郵便局先行)", type: "loop", dep: "11:40", arr: "12:25", satSun: true, schoolHolidays: true },
+    { line: "市内循環(郵便局先行)", type: "loop", dep: "15:35", arr: "16:20", satSun: true, schoolHolidays: true },
+    { line: "市内循環(郵便局先行)", type: "loop", dep: "17:42", arr: "18:15", satSun: true, schoolHolidays: true }
   ]
 };
 
 // 徒歩所要時間
 const walkTime = {
   hokutetsu: 2, // 市立高校前：徒歩2分
-  loop: 10      // 八幡町：徒歩10分
+  loop: 8       // 八幡会館：徒歩8分
 };
 
 let currentDirection = 'toSchool';
@@ -340,7 +343,7 @@ function render() {
   // 対象方向のバスをフィルタリング
   const rawList = busData[currentDirection];
   const validList = rawList.filter(bus => {
-    // 1. 曜日チェック (平日専用便・土日祝専用便の分岐)
+    // 1. 曜日チェック
     if (dayInfo.isWeekend && !bus.satSun) return false;
     if (!dayInfo.isWeekend && bus.satSun && !isBothDaysBus(bus)) return false;
 
@@ -350,9 +353,7 @@ function render() {
     return true;
   });
 
-  // 平日・土日両方で走る便の同一判定補助
   function isBothDaysBus(bus) {
-    // 平日判定時、同じ路線・時刻で平日設定が別にある場合は土日祝専用データを弾く
     return !rawList.some(b => b.line === bus.line && b.dep === bus.dep && !b.satSun);
   }
 
@@ -382,7 +383,7 @@ function render() {
   listContainer.innerHTML = upcomingList.map((bus, index) => {
     const isFirst = (index === 0);
     const tagClass = bus.type === 'hokutetsu' ? 'tag-hokutetsu' : 'tag-loop';
-    const busStopName = bus.type === 'hokutetsu' ? '市立高校前' : '八幡町';
+    const busStopName = bus.type === 'hokutetsu' ? '市立高校前' : '八幡会館';
     const walkMinutes = walkTime[bus.type];
 
     let destHtml = '';
